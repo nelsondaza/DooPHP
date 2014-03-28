@@ -563,7 +563,7 @@ class Doo{
     }
 
     public static function version(){
-        return '1.4.1';
+        return '1.5';
     }
 }
 

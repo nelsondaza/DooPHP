@@ -147,6 +147,8 @@ class DooSqlMagic {
         try{
             if ($this->dbconfig[4]=='sqlite')
                 $this->pdo = new PDO("{$this->dbconfig[4]}:{$this->dbconfig[0]}");
+            else if ($this->dbconfig[4]=='oci')
+                $this->pdo = new PDO("oci:dbname=//{$this->dbconfig[0]}/{$this->dbconfig[1]}", $this->dbconfig[2], $this->dbconfig[3],array(PDO::ATTR_PERSISTENT => $this->dbconfig[5]));
             else
                 $this->pdo = new PDO("{$this->dbconfig[4]}:host={$this->dbconfig[0]};dbname={$this->dbconfig[1]}", $this->dbconfig[2], $this->dbconfig[3],array(PDO::ATTR_PERSISTENT => $this->dbconfig[5]));
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -158,6 +160,8 @@ class DooSqlMagic {
                 $this->pdo->exec("SET NAMES '". $this->dbconfig['charset']. "'");
             }
         }catch(PDOException $e){
+            if(Doo::conf()->APP_MODE=='dev')
+                throw $e;
             throw new SqlMagicException('Failed to open the DB connection', SqlMagicException::DBConnectionError);
         }
     }
@@ -176,6 +180,8 @@ class DooSqlMagic {
         try{
             if ($dbconfig[4]=='sqlite')
                 $this->pdo = new PDO("{$dbconfig[4]}:{$dbconfig[0]}");
+            else if ($this->dbconfig[4]=='oci')
+                $this->pdo = new PDO("oci:dbname=//{$this->dbconfig[0]}/{$this->dbconfig[1]}", $this->dbconfig[2], $this->dbconfig[3],array(PDO::ATTR_PERSISTENT => $this->dbconfig[5]));
             else
                 $this->pdo = new PDO("{$dbconfig[4]}:host={$dbconfig[0]};dbname={$dbconfig[1]}", $dbconfig[2], $dbconfig[3],array(PDO::ATTR_PERSISTENT => $dbconfig[5]));
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -187,12 +193,25 @@ class DooSqlMagic {
                 $this->pdo->exec("SET NAMES '". $dbconfig['charset']. "'");
             }
         }catch(PDOException $e){
+            if(Doo::conf()->APP_MODE=='dev')
+                throw $e;
             throw new SqlMagicException('Failed to open the DB connection', SqlMagicException::DBConnectionError);
         }
     }
 
 	public function attemptAutoReconnect($status = true) {
 		$this->attemptAutoReconnect = $status;
+	}
+
+	/**
+	 * Attempts to update the wait_timeout variable determining how long to connection should remain open.
+	 * Useful when you want to keep connections timeouts low by default but need a long running task to keep
+	 * the connection open for an extended period of time
+	 * Note: currently only supports MySQL but can add other options if users provide appropriate sql statements
+	 * @param int $timeout The time the connection should remain open in Seconds
+	 */
+	public function setConnectionTimeout($timeout=60) {
+		$this->query("SET SESSION wait_timeout = ?", array($timeout));
 	}
 
     /**
@@ -286,8 +305,10 @@ class DooSqlMagic {
 			try {
 				if($param==null)
 					$stmt->execute();
-				else
-					$stmt->execute($param);
+				else {
+          $this->bindArrayValue($stmt, $param);
+					$stmt->execute();
+        }
 				return $stmt;
 			} catch (PDOException $pdoEx) {
 
@@ -304,10 +325,42 @@ class DooSqlMagic {
 
 		if($param==null)
 			$stmt->execute();
-		else
-			$stmt->execute($param);
-		
+	  else {
+      $this->bindArrayValue($stmt, $param);
+			$stmt->execute();
+    }
+
 		return $stmt;
+    }
+
+    /*
+    * Binds parameters according to their type.
+    * @param PDOStatement $req PDOStatement object.
+    * @param array $array Values used in the prepared SQL.
+    * @param int $typeArray  PDO data type array for the parameter.
+    * @return void
+    */
+    function bindArrayValue($req, $array, $typeArray = false) {
+      if(is_object($req) && ($req instanceof PDOStatement)) {
+        foreach($array as $key => $value) {
+          if (is_int($key) === TRUE) {
+            $key += 1;
+          }
+          if($typeArray){
+            $req->bindValue($key,$value,$typeArray[$key]);
+          }
+          else {
+            if(is_int($value))
+              $param = PDO::PARAM_INT;
+            elseif(is_bool($value))
+              $param = PDO::PARAM_BOOL;
+            else
+              $param = PDO::PARAM_STR;
+            if($param)
+              $req->bindValue($key,$value,$param);
+          }
+        }
+      }
     }
 
     /*
@@ -337,6 +390,55 @@ class DooSqlMagic {
 			}
 		}
         return $stmt->fetch();
+    }
+
+    /*
+    * Execute a query and Fetch single value
+    * @param string $query SQL query prepared statement
+    * @param array $param Values used in the prepared SQL
+    * @return string Returns a single value.
+    */
+    public function fetchOne($query, $param=null) {
+      $stmt = $this->query($query, $param);
+      $stmt->setFetchMode(PDO::FETCH_COLUMN, 0);
+      return $stmt->fetch();
+    }
+
+    /*
+    * Execute a query and Fetch single column
+    * @param string $query SQL query prepared statement
+    * @param array $param Values used in the prepared SQL
+    * @return array Returns a single column.
+    */
+    public function fetchColumn($query, $param=null) {
+      $stmt = $this->query($query, $param);
+      $stmt->setFetchMode(PDO::FETCH_COLUMN, 0);
+      return $stmt->fetchAll();
+    }
+
+    /*
+    * Execute a query and Fetch key value assoc array
+    * @param string $query SQL query prepared statement
+    * @param array $param Values used in the prepared SQL
+    * @return array Returns a assoc array.
+    */
+    public function fetchKeyValue($query, $param=null) {
+      $stmt = $this->query($query, $param);
+      $stmt->setFetchMode(PDO::FETCH_KEY_PAIR);
+      return $stmt->fetchAll();
+    }
+
+    /*
+    * Execute a query and Fetch key values assoc array
+    * @param string $query SQL query prepared statement
+    * @param array $param Values used in the prepared SQL
+    * @return array Returns a assoc array.
+    */
+    public function fetchKeyValues($query, $param=null) {
+      $stmt = $this->query($query, $param);
+      $res = $stmt->fetchAll(PDO::FETCH_GROUP|PDO::FETCH_ASSOC);
+      $res = array_map('reset', $res);
+      return $res;
     }
 
    /*
@@ -442,6 +544,14 @@ class DooSqlMagic {
      */
     public function getDbObject(){
         return $this->pdo;
+    }
+
+    /**
+     * Inject the underlying PDO object used in DooSqlMagic
+     * @param PDO $pdo PDO object
+     */
+    public function setDbObject($pdo){
+        $this->pdo = $pdo;
     }
 
     //---------------------------------- SQL generator functions ------------------------
@@ -1967,6 +2077,10 @@ class DooSqlMagic {
 
         $sql ="INSERT INTO {$obj['_table']} ($fieldstr) VALUES ($valuestr)";
         $this->query($sql, $values);
+
+        if ($this->dbconfig[4] == 'pgsql') {
+            return $this->pdo->lastInsertId($model->_primarykey);
+        }
         return $this->pdo->lastInsertId();
     }
 
@@ -2020,6 +2134,9 @@ class DooSqlMagic {
 
         $sql ="INSERT INTO {$model->_table} ($fieldstr) VALUES ($valuestr)";
         $this->query($sql, $values);
+        if ($this->dbconfig[4] == 'pgsql') {
+            return $this->pdo->lastInsertId($model->_primarykey);
+        }
         return $this->pdo->lastInsertId();
     }
 
@@ -2177,12 +2294,23 @@ class DooSqlMagic {
 	}
 
     /**
-     * Update an existing record with a list of keys & values (assoc array). (Prepares and execute the UPDATE statements)
+     * Use updateAttributes() instead
+     * @deprecated deprecated since version 1.3
      * @param mixed $model The model object to be updated.
      * @param array $opt Associative array of options to generate the UPDATE statement. Supported: <i>where, limit, field, param</i>
      * @return int Number of rows affected
      */
     public function update_attributes($model, $data, $opt=NULL){
+        return $this->updateAttributes($model, $data, $opt);
+    }
+
+    /**
+     * Update an existing record with a list of keys & values (assoc array). (Prepares and execute the UPDATE statements)
+     * @param mixed $model The model object to be updated.
+     * @param array $opt Associative array of options to generate the UPDATE statement. Supported: <i>where, limit, field, param</i>
+     * @return int Number of rows affected
+     */
+    public function updateAttributes($model, $data, $opt=NULL){
         if(is_string($model)){
             $model = $this->loadModel($model,true);
             $table = $model->_table;

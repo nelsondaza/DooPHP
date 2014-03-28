@@ -76,20 +76,30 @@ class DooModel{
      * @var string
      */
     protected static $className = __CLASS__;
+    
+    /**
+     * DB object
+     * @var DooSqlMagic
+     */
+    protected $dbObject;
 
     /**
      * Constructor of a Model. Sets the model class properties with a list of keys & values.
      * @param array $properties Array of data (keys and values) to set the model properties
+     * @param DooSqlMagic $dbOject DB object to be used instead of the default DooSqlMagic instance from Doo::db()
      */
-    public function __construct($properties=null){
+    public function __construct($properties=null, $dbOject=null){
         if($properties!==null){
             foreach($properties as $k=>$v){
                 if(in_array($k, $this->_fields))
                     $this->{$k} = $v;
             }
         }
+        if($dbOject!==null){
+            $this->dbObject = $dbOject;        
+        }
     }
-
+    
     /**
      * Setup the model. Use if needed with constructor.
      *
@@ -140,28 +150,52 @@ class DooModel{
      * @return DooSqlMagic
      */
     public function db(){
-        return Doo::db();
+        if($this->dbObject===null)
+            return Doo::db();        
+        return $this->dbObject;
     }
 
+    public function getDataObject(){
+        $obj = new stdClass();
+        foreach($this->_fields as $field)
+            $obj->{$field} = $this->{$field};
+        return $obj;
+    }
+
+    public function getDataArray(){
+        $obj = array();
+        foreach($this->_fields as $field)
+            $obj[$field] = $this->{$field};
+        return $obj;
+    }
+    
+    /**
+     * Set DB object to be used instead of the default DooSqlMagic instance from Doo::db()
+     * @param DooSqlMagic $dbOject DB object
+     */
+    public function setDb($dbObject){
+        $this->dbObject = $dbObject;
+    }
+    
     /**
      * Commits a transaction. Transactions can be nestable.
      */
     public function commit(){
-        Doo::db()->commit();
+        $this->db()->commit();
     }
 
     /**
      * Initiates a transaction. Transactions can be nestable.
      */
     public function beginTransaction(){
-        Doo::db()->beginTransaction();
+        $this->db()->beginTransaction();
     }
 
     /**
      * Rolls back a transaction. Transactions can be nestable.
      */
     public function rollBack(){
-        Doo::db()->rollBack();
+        $this->db()->rollBack();
     }
 
     /**
@@ -170,7 +204,7 @@ class DooModel{
      * @return mixed A model object or associateve array of the queried result
      */
     public function find($opt=null){
-        return Doo::db()->find($this, $opt);
+        return $this->db()->find($this, $opt);
     }
 
     /**
@@ -180,7 +214,7 @@ class DooModel{
      * @return mixed A list of model object(s) or associateve array of the queried result
      */
     public function relate($rmodel, $opt=null){
-        return Doo::db()->relate($this, $rmodel, $opt);
+        return $this->db()->relate($this, $rmodel, $opt);
     }
 
     /**
@@ -197,7 +231,7 @@ class DooModel{
      * @return mixed A list of model objects of the queried result
      */
 	public function relateMany($rmodel, $opt=null){
-        return Doo::db()->relateMany($this, $rmodel, $opt);
+        return $this->db()->relateMany($this, $rmodel, $opt);
     }
 
     /**
@@ -214,7 +248,7 @@ class DooModel{
      * @return mixed A list of model objects of the queried result
      */
 	public function relateExpand($rmodel, $opt=null){
-        return Doo::db()->relateExpand($this, $rmodel, $opt);
+        return $this->db()->relateExpand($this, $rmodel, $opt);
     }
 
     /**
@@ -222,7 +256,7 @@ class DooModel{
      * @return int The inserted record's Id
      */
     public function insert(){
-        return Doo::db()->insert($this);
+        return $this->db()->insert($this);
     }
 
     /**
@@ -231,7 +265,7 @@ class DooModel{
      * @return int The inserted record's Id
      */
     public function insertAttributes($data){
-        return Doo::db()->insertAttributes($this, $data);
+        return $this->db()->insertAttributes($this, $data);
     }
     
     /**
@@ -248,7 +282,7 @@ class DooModel{
      * @return int The inserted record's Id
      */
     public function relatedInsert($rmodels){
-        return Doo::db()->relatedInsert($this, $rmodels);
+        return $this->db()->relatedInsert($this, $rmodels);
     }
 
     /**
@@ -257,7 +291,15 @@ class DooModel{
      * @return int Number of rows affected
      */
     public function update($opt=NULL){
-        return Doo::db()->update($this, $opt);
+        return $this->db()->update($this, $opt);
+    }
+
+    /**
+     * Use updateAttributes() instead
+     * @deprecated deprecated since version 1.3
+     */
+    public function update_attributes($data, $opt=NULL){
+        return $this->db()->updateAttributes($this, $data, $opt);
     }
 
     /**
@@ -265,8 +307,8 @@ class DooModel{
      * @param array $opt Associative array of options to generate the UPDATE statement. Supported: <i>where, limit, field, param</i>
      * @return int Number of rows affected
      */
-    public function update_attributes($data, $opt=NULL){
-        return Doo::db()->update_attributes($this, $data, $opt);
+    public function updateAttributes($data, $opt=NULL){
+        return $this->db()->update_attributes($this, $data, $opt);
     }
 
     /**
@@ -275,7 +317,7 @@ class DooModel{
      * @param array $opt Assoc array of options to update the main model. Supported: <i>where, limit, field, param</i>
      */
     public function relatedUpdate($rmodels, $opt=NULL){
-        return Doo::db()->relatedUpdate($this, $rmodels, $opt);
+        return $this->db()->relatedUpdate($this, $rmodels, $opt);
     }
 
     /**
@@ -283,14 +325,14 @@ class DooModel{
      * @return int
      */
     public function lastInsertId(){
-        return Doo::db()->lastInsertId();
+        return $this->db()->lastInsertId();
     }
 
 	/**
 	 * Delete ALL existing records. (Prepares and executes the DELETE statements)
 	 */
 	public function deleteAll() {
-		return Doo::db()->deleteAll($this);
+		return $this->db()->deleteAll($this);
 	}
 
     /**
@@ -298,7 +340,7 @@ class DooModel{
      * @param array $opt Associative array of options to generate the UPDATE statement. Supported: <i>where, limit, param</i>
      */
     public function delete($opt=NULL){
-        return Doo::db()->delete($this, $opt);
+        return $this->db()->delete($this, $opt);
     }
 
     //------- static shorthand methods
@@ -441,9 +483,9 @@ class DooModel{
                 $options['custom'] = ','. $desc .' DESC';
             }
             //print_r($options);
-            return Doo::db()->find($this, $options);
+            return $this->db()->find($this, $options);
         }
-        return Doo::db()->find($this, array('limit'=>$limit));
+        return $this->db()->find($this, array('limit'=>$limit));
     }
 
     /**
@@ -455,9 +497,9 @@ class DooModel{
     public function getOne($options=null){
         if($options!==null){
             $options['limit'] = 1;
-            return Doo::db()->find($this, $options);
+            return $this->db()->find($this, $options);
         }
-        return Doo::db()->find($this, array('limit'=>1));
+        return $this->db()->find($this, array('limit'=>1));
     }
 
     /**
@@ -471,11 +513,11 @@ class DooModel{
 		if (isset($options['distinct']) && $options['distinct'] == true) {
 			$options['select'] .= 'COUNT(DISTINCT '. $this->_table . '.' . $this->_fields[0] .') as _doototal';
 		} else {
-			$options['select'] .= 'COUNT(*) as _doototal';
+			$options['select'] .= 'COUNT('. $this->_table . '.' . $this->_fields[0] .') as _doototal';
 		}
         $options['asArray'] = true;
         $options['limit'] = 1;
-        $rs = Doo::db()->find($this, $options);
+        $rs = $this->db()->find($this, $options);
         return $rs['_doototal'];
     }
 
@@ -504,9 +546,9 @@ class DooModel{
                 $options['asc'] = $asc;
                 $options['custom'] = ','. $desc .' DESC';
             }
-            return Doo::db()->find(self::$className, $options);
+            return $this->db()->find(self::$className, $options);
         }
-        return Doo::db()->find(self::$className, array('limit'=>$limit));
+        return $this->db()->find(self::$className, array('limit'=>$limit));
     }
 
     /**
@@ -522,9 +564,9 @@ class DooModel{
 
         if($options!==null){
             $options['limit'] = 1;
-            return Doo::db()->find($model, $options);
+            return $this->db()->find($model, $options);
         }
-        return Doo::db()->find($model, array('limit'=>1));
+        return $this->db()->find($model, array('limit'=>1));
     }
 
     /**
@@ -547,7 +589,7 @@ class DooModel{
 
         $options['asArray'] = true;
         $options['limit'] = 1;
-        $rs = Doo::db()->find($model, $options);
+        $rs = $this->db()->find($model, $options);
         return $rs['_doototal'];
     }
 
@@ -588,13 +630,13 @@ class DooModel{
                 if(sizeof($args)>1){
                     if(isset($first))
                         $args[1]['limit'] = 1;
-                    return Doo::db()->find($obj, $args[1]);
+                    return $this->db()->find($obj, $args[1]);
                 }
 
                 if(isset($first)){
-                    return Doo::db()->find($obj, $first);
+                    return $this->db()->find($obj, $first);
                 }
-                return Doo::db()->find($obj);
+                return $this->db()->find($obj);
             }
             else{
                 $i=0;
@@ -606,13 +648,13 @@ class DooModel{
                 if(sizeof($args)>$i){
                     if(isset($first))
                         $args[$i]['limit'] = 1;
-                    return Doo::db()->find($obj, $args[$i]);
+                    return $this->db()->find($obj, $args[$i]);
                 }
 
                 if(isset($first)){
-                    return Doo::db()->find($obj, $first);
+                    return $this->db()->find($obj, $first);
                 }
-                return Doo::db()->find($obj);
+                return $this->db()->find($obj);
             }
         }
 
@@ -642,19 +684,19 @@ class DooModel{
             }
 
             if(sizeof($args)===0){
-                return Doo::db()->relate( $this, $relatedClass);
+                return $this->db()->relate( $this, $relatedClass);
             }
             else if(sizeof($args)===1){
                 if(is_array($args[0])){
-                    return Doo::db()->relate( $this, $relatedClass, $args[0]);
+                    return $this->db()->relate( $this, $relatedClass, $args[0]);
                 }else{
                     if(isset($first)){
-                        return Doo::db()->relate( $args[0], $relatedClass, $first);
+                        return $this->db()->relate( $args[0], $relatedClass, $first);
                     }
-                    return Doo::db()->relate( $args[0], $relatedClass);
+                    return $this->db()->relate( $args[0], $relatedClass);
                 }
             }else{
-                return Doo::db()->relate( $args[0], $relatedClass, $args[1]);
+                return $this->db()->relate( $args[0], $relatedClass, $args[1]);
             }
         }
     }
@@ -774,3 +816,4 @@ class DooModel{
     }
 
 }
+

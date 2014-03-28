@@ -23,6 +23,14 @@
  * @package doo.app
  * @since 1.0
  */
+
+	/**
+	 * Class DooConfig
+	 *
+	 * @todo-nelsondaza verify this $PROTECTED_FOLDER_ORI property
+	 * @property $PROTECTED_FOLDER_ORI bool|undefined
+	 * @property $START_TIME microtime Simple benchmarking. Comes from: <code>$config['START_TIME'] = microtime(true);</code> in <i>common.conf.php</i> .
+	 */
 class DooConfig{
     
     /**
@@ -201,6 +209,18 @@ class DooConfig{
      * @var string
      */
     public $APP_NAMESPACE_ID;
+    
+    /**
+     * Default chmod to be used with classes such as DooFile. Default value is 0777
+     * @var int
+     */
+    public $CHMOD_DEFAULT = 0777;
+    
+    /**
+     * Indicating if the current execution if initiated from a CLI call.
+     * @var bool
+     */
+    public $FROM_CLI = false;
 	
     /**
      * Set the configurations. SITE_PATH, BASE_PATH and APP_URL is required

@@ -1,11 +1,9 @@
-DOOPHP Web Framework
-=============================
+## INSTALL DOOPHP Web Framework
 
 Thank you for using DooPHP - a high performance MVC based PHP framework.
 
 
-INSTALLATION
-------------
+### INSTALLATION
 
 Please make sure the release file is unpacked under a Web-accessible
 directory. You have to put it under the root directory for the app & demos to work. 
@@ -34,8 +32,8 @@ If your app is in a sub directory, please change the following setting:
 
 More details on installation can be found at http://www.doophp.com/doc/guide/start/install
 
-REQUIREMENTS
-------------
+
+### REQUIREMENTS
 
 The minimum requirement by DooPHP is that your Web server supports
 PHP 5.1.x or above. DooPHP has been tested with Apache 2 and Cherokee Web Server
@@ -44,8 +42,7 @@ on Windows and Linux operating systems.
 To use the database ORM you have to enable PDO extension.
 
 
-QUICK START
------------
+### QUICK START
 
 DooPHP comes with a directory call 'app'. It is the basic of a DooPHP application.
 Change the Site path and project path configurations in /protected/config/common.conf.php 
@@ -53,17 +50,14 @@ Change the Site path and project path configurations in /protected/config/common
 The default configuration is for development purpose.
 
 
-WHAT's NEXT
------------
+### WHAT's NEXT
 
 Please visit the project website for tutorials, class reference
 and join discussions with other DooPHP users.
 
-
-
-DooPHP
-http://www.doophp.com
-http://www.doophp.com/blog
-http://www.doophp.com/forum
-http://www.twitter.com/doophp
+	DooPHP
+	http://www.doophp.com
+	http://www.doophp.com/blog
+	http://www.doophp.com/forum
+	http://www.twitter.com/doophp
 

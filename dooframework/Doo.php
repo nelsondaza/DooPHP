@@ -22,8 +22,10 @@
  * @package doo
  * @since 1.0
  */
+
 class Doo{
     protected static $_app;
+    protected static $_cliApp;
     protected static $_conf;
     protected static $_logger;
     protected static $_db;
@@ -69,36 +71,65 @@ class Doo{
     public static function loadModelFromApp($modelName, $appName='default', $createObj=false){
         return self::load($modelName, self::$_globalApps[$appName] . 'model/', $createObj);
     }
-    
-    /**
-     * Imports the definition of User defined class(es) from a Doo application
-     * @param string|array $className Name(s) of the Model class to be imported
-     * @param string $appName Name of the application to be loaded from
-     * @param bool $createObj Determined whether to create object(s) of the class
-     * @return mixed returns NULL by default. If $createObj is TRUE, it creates and return the Object(s) of the class name passed in.
-     */
+
+	/**
+	 * Imports the definition of User defined class(es) from a Doo application
+	 *
+	 * @param string|array $className Name(s) of the Model class to be imported
+	 * @param string       $appName   Name of the application to be loaded from
+	 * @param bool         $createObj Determined whether to create object(s) of the class
+	 *
+	 * @return mixed returns NULL by default. If $createObj is TRUE, it creates and return the Object(s) of the class name passed in.
+	 */
     public static function loadClassFromApp($className, $appName='default', $createObj=false){
         return self::load($className, self::$_globalApps[$appName] . 'class/', $createObj);
     }
-    
-    /**
-     * Imports the definition of Controller class from a Doo application
-     * @param string $class_name Name of the class to be imported
-     */
-    public static function loadControllerFromApp($controllerName, $appName='default'){
+
+	/**
+	 * Imports the definition of Controller class from a Doo application
+	 *
+	 * @param string $controllerName Name of the class to be imported
+	 * @param string $appName
+	 *
+	 * @return mixed
+	 */
+	public static function loadControllerFromApp($controllerName, $appName='default'){
         return self::load($controllerName, self::$_globalApps[$appName] . 'controller/');
     }
 
     /**
-	 * @param string $appType The type of application you want. Options are: 'DooWebApp' and 'DooCliApp'
-     * @return DooWebApp|DooCliApp the application singleton, auto create if the singleton has not been created yet.
+     * @return DooWebApp the application instance.
      */
-    public static function app($appType='DooWebApp'){
+    public static function app(){
         if(self::$_app===NULL){
-            self::loadCore('app/' . $appType);
-            self::$_app = new $appType();
+            self::loadCore('app/DooWebApp');
+            self::$_app = new DooWebApp;
         }
         return self::$_app;
+    }
+    
+    /**
+     * Set application type to be created.
+     * @param string|object $type 'DooWebApp' or pass in any instance of your custom app class
+     */
+    public static function setAppType($type){
+        if(is_string($type)){
+            self::loadCore('app/'.$type);        
+            self::$_app = new $type;            
+        }else{
+            self::$_app = $type;                        
+        }
+    }
+    
+    /**
+     * @return DooCliApp the CLI application instance.
+     */
+    public static function cliApp(){
+        if(self::$_cliApp===NULL){
+            self::loadCore('app/DooCliApp');
+            self::$_cliApp = new DooCliApp;
+        }
+        return self::$_cliApp;
     }
 
     /**
@@ -140,10 +171,12 @@ class Doo{
         return self::$_db;
     }
 
-    /**
-     * @return DooSession
-     */
-    public static function session($namespace = null){
+	/**
+	 * @param null $namespace
+	 *
+	 * @return DooSession
+	 */
+	public static function session($namespace = null){
         if(self::$_session===NULL){
             self::loadCore('session/DooSession');
             self::$_session = new DooSession($namespace);
@@ -152,18 +185,25 @@ class Doo{
     }
 	
 	/**
-     * @return true/false according to cache system being installed
-     */
-    public static function cacheSession($prefix = 'dooSession/', $type='file'){
+	 * @param string $prefix
+	 * @param string $type
+	 *
+	 * @return bool
+	 */
+	public static function cacheSession($prefix = 'dooSession/', $type='file'){
 		$cache = self::cache($type);
 		self::loadCore('session/DooCacheSession');
 		return DooCacheSession::installOnCache($cache, $prefix);
     }
 
-	 /**
-	  * @return DooTranslator
-	  */
-    public static function translator($adapter, $data, $options=array()) {
+	/**
+	 * @param       $adapter
+	 * @param       $data
+	 * @param array $options
+	 *
+	 * @return DooTranslator
+	 */
+	public static function translator($adapter, $data, $options=array()) {
         if(self::$_translator===NULL){
             self::loadCore('translate/DooTranslator');
             self::$_translator = new DooTranslator($adapter, $data, $options);
@@ -192,7 +232,7 @@ class Doo{
 
     /**
      * @param string $cacheType Cache type: file, php, front, apc, memcache, xcache, eaccelerator. Default is file based cache.
-     * @return DooFileCache|DooPhpCache|DooFrontCache|DooApcCache|DooMemCache|DooXCache|DooEAcceleratorCache file/php/apc/memcache/xcache/eaccelerator & frontend caching tool, singleton, auto create if the singleton has not been created yet.
+     * @return DooFileCache|DooPhpCache|DooFrontCache|DooApcCache|DooMemCache|DooXCache|DooEAcceleratorCache|null file/php/apc/memcache/xcache/eaccelerator & frontend caching tool, singleton, auto create if the singleton has not been created yet.
      */
     public static function cache($cacheType='file') {
         if($cacheType=='file'){
@@ -251,6 +291,8 @@ class Doo{
             self::$_cache['memcache'] = new DooMemCache(Doo::conf()->MEMCACHE);
             return self::$_cache['memcache'];
         }
+
+	    return null;
     }
 
     /**
@@ -269,6 +311,7 @@ class Doo{
         }else if(is_array($class_name)===True){
             //if not string, then a list of Class name, require them all.
             //make sure the class_name has array with is_array
+	        $obj = null;
             if($createObj)
                 $obj=array();
 
@@ -282,6 +325,7 @@ class Doo{
             if($createObj)
                 return $obj;
         }
+	    return null;
     }
 
     /**
@@ -294,11 +338,14 @@ class Doo{
         return self::load($class_name, self::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . "class/", $createObj);
     }
 
-    /**
-     * Imports the definition of Controller class. Class file is located at <b>SITE_PATH/protected/controller/</b>
-     * @param string $class_name Name of the class to be imported
-     */
-    public static function loadController($class_name){
+	/**
+	 * Imports the definition of Controller class. Class file is located at <b>SITE_PATH/protected/controller/</b>
+	 *
+	 * @param string $class_name Name of the class to be imported
+	 *
+	 * @return mixed
+	 */
+	public static function loadController($class_name){
 		return self::load($class_name, self::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . 'controller/', false);
     }
 
@@ -331,15 +378,16 @@ class Doo{
         require_once self::conf()->BASE_PATH ."$class_name.php";
     }
 
-    /**
-     * Imports the definition of Model class(es) in a certain module or from the main app.
-     *
-     * @param string|array $class_name Name(s) of the Model class to be imported
-     * @param string $path module folder name. Default is the main app folder.
-     * @param bool $createObj Determined whether to create object(s) of the class
-     * @return mixed returns NULL by default. If $createObj is TRUE, it creates and return the Object(s) of the class name passed in.
-     */
-    public static function loadModelAt($class_name, $moduleFolder=Null, $createObj=FALSE){
+	/**
+	 * Imports the definition of Model class(es) in a certain module or from the main app.
+	 *
+	 * @param string|array $class_name   Name(s) of the Model class to be imported
+	 * @param null|string  $moduleFolder module folder name. Default is the main app folder.
+	 * @param bool         $createObj    Determined whether to create object(s) of the class
+	 *
+	 * @return mixed returns NULL by default. If $createObj is TRUE, it creates and return the Object(s) of the class name passed in.
+	 */
+	public static function loadModelAt($class_name, $moduleFolder=null, $createObj=false){
         if($moduleFolder===null){
             $moduleFolder = Doo::getAppPath();
         }else{
@@ -348,30 +396,32 @@ class Doo{
         return self::load($class_name, $moduleFolder . "/model/", $createObj);
     }
 
-    /**
-     * Imports the definition of Controller class(es) in a certain module or from the main app.
-     *
-     * @param string|array $class_name Name(s) of the Controller class to be imported
-     * @param string $path module folder name. Default is the main app folder.
-     */
-    public static function loadControllerAt($class_name, $moduleFolder=Null){
+	/**
+	 * Imports the definition of Controller class(es) in a certain module or from the main app.
+	 *
+	 * @param string|array $class_name   Name(s) of the Controller class to be imported
+	 * @param string       $moduleFolder module folder name. Default is the main app folder.
+	 */
+	public static function loadControllerAt($class_name, $moduleFolder=Null){
         if($moduleFolder===null){
             $moduleFolder = Doo::getAppPath();
         }else{
             $moduleFolder = Doo::getAppPath() . 'module/' . $moduleFolder;            
-        }        
+        }
+		/** @noinspection PhpIncludeInspection */
 		require_once $moduleFolder . '/controller/'.$class_name.'.php';
     }
 
-    /**
-     * Imports the definition of User defined class(es) in a certain module or from the main app.
-     *
-     * @param string|array $class_name Name(s) of the class to be imported
-     * @param string $path module folder name. Default is the main app folder.
-     * @param bool $createObj Determined whether to create object(s) of the class
-     * @return mixed returns NULL by default. If $createObj is TRUE, it creates and return the Object(s) of the class name passed in.
-     */
-    public static function loadClassAt($class_name, $moduleFolder=Null, $createObj=FALSE){
+	/**
+	 * Imports the definition of User defined class(es) in a certain module or from the main app.
+	 *
+	 * @param string|array $class_name   Name(s) of the class to be imported
+	 * @param string|null  $moduleFolder module folder name. Default is the main app folder.
+	 * @param bool         $createObj    Determined whether to create object(s) of the class
+	 *
+	 * @return mixed returns NULL by default. If $createObj is TRUE, it creates and return the Object(s) of the class name passed in.
+	 */
+	public static function loadClassAt($class_name, $moduleFolder=Null, $createObj=FALSE){
         if($moduleFolder===null){
             $moduleFolder = Doo::getAppPath();
         }else{
@@ -388,8 +438,10 @@ class Doo{
      */
     public static function loadPlugin($class_name, $moduleFolder=Null){
         if($moduleFolder===null){
+	        /** @noinspection PhpIncludeInspection */
             require_once Doo::getAppPath() . 'plugin/'. $class_name .'.php';
         }else{
+	        /** @noinspection PhpIncludeInspection */
             require_once Doo::getAppPath() .'module/'. $moduleFolder .'/plugin/'. $class_name .'.php';
         }
     }
@@ -424,6 +476,13 @@ class Doo{
             
         //controller
 		$class['DooController'] = 'controller/DooController';
+		$class['DooCliController'] = 'controller/DooCliController';
+		$class['DooBDDController'] = 'controller/DooBDDController';
+        
+        //ext/ArrBdd
+		$class['ArrBDD'] = 'ext/ArrBDD/ArrBDD';
+		$class['ArrBDDSpec'] = 'ext/ArrBDD/ArrBDDSpec';
+		$class['ArrMock'] = 'ext/ArrBDD/ArrMock';
         
         //db
 		$class['DooDbExpression']    = 'db/DooDbExpression';
@@ -469,8 +528,8 @@ class Doo{
 		$class['DooUriRouter'] = 'uri/DooUriRouter';
         
         //view
-		$class['DooView'] = 'uri/DooView';
-		$class['DooViewBasic'] = 'uri/DooViewBasic';
+		$class['DooView'] = 'view/DooView';
+		$class['DooViewBasic'] = 'view/DooViewBasic';
         
         if(isset($class[$classname]))
             self::loadCore($class[$classname]);
@@ -500,6 +559,7 @@ class Doo{
                     $rsExisting = null;
 
                     if(file_exists($autoloadConfigFolder.'autoload.php')===true){
+	                    /** @noinspection PhpIncludeInspection */
                         $rsExisting = include($autoloadConfigFolder.'autoload.php');
                     }
 
@@ -510,14 +570,16 @@ class Doo{
                         file_put_contents($autoloadConfigFolder.'autoload.php', '<?php return '.var_export($rs, true) . ';');                    
                     }                                
                 }
-                else{
+                else if(file_exists($path . 'config/autoload/autoload.php')){
 					if(isset(self::$_autoloadClassMap)===false)
+						/** @noinspection PhpIncludeInspection */
 						$rs = self::$_autoloadClassMap = include_once($path . 'config/autoload/autoload.php');
 					else
 						$rs = self::$_autoloadClassMap;
                 }
 				
                 if( isset($rs[$classname . '.php'])===true ){
+	                /** @noinspection PhpIncludeInspection */
                     require_once $rs[$classname . '.php'];
                     return;
                 }
@@ -528,6 +590,7 @@ class Doo{
                 $pos = strpos($classname, Doo::conf()->APP_NAMESPACE_ID);
                 if($pos===0){
                     $classname = str_replace('\\','/',substr($classname, strlen(Doo::conf()->APP_NAMESPACE_ID)+1));
+	                /** @noinspection PhpIncludeInspection */
                     require_once $path . $classname . '.php';
                 }
             }
@@ -544,6 +607,10 @@ class Doo{
         }else{
             return Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER;                            
         }        
+    }
+    
+    public static function getCurrentModulePath(){
+        return Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER;
     }
 
     /**
@@ -566,6 +633,6 @@ class Doo{
     }
 
     public static function version(){
-        return '1.4.1';
+        return '1.5';
     }
 }

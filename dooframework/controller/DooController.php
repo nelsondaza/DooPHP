@@ -29,29 +29,31 @@
  * $autoroute
  * $vdata
  * $renderMethod
- * init_put_vars()
+ * initPutVars()
  * load()
- * language()
- * accept_type()
- * render()
- * renderc()
- * setContentType()
- * is_SSL()
- * view()
  * db()
- * cache()
  * acl()
  * beforeRun()
- * isAjax()
- * renderLayout()
- * clientIP()
+ * cache()
  * saveRendered()
  * saveRenderedC()
+ * view()
+ * render()
+ * renderc()
+ * language()
+ * acceptType()
+ * setContentType()
+ * clientIP()
+ * afterRun()
+ * getKeyParam()
+ * getKeyParams()
+ * viewRenderAutomation()
+ * isAjax()
+ * isSSL()
  * toXML()
  * toJSON()
- * viewRenderAutomation()
- * getKeyParam()
- * afterRun()
+ * setHeader()
+ * setRawHeader()
  * </code>
  *
  * You still have a lot of freedom to name your methods and properties other than names mentioned.
@@ -107,13 +109,6 @@ class DooController {
     protected $_load;
     protected $_view;
 
-    /**
-     * Use initPutVars() instead
-     * @deprecated deprecated since version 1.3
-     */
-    public function init_put_vars(){
-        parse_str(file_get_contents('php://input'), $this->puts);
-    }
 
     /**
      * Set PUT request variables in a controller. This method is to be used by the main web app class.
@@ -162,6 +157,25 @@ class DooController {
      */
     public function cache($cacheType='file'){
         return Doo::cache($cacheType);
+    }
+    
+    /**
+     * Set header. eg. setHeader('Content-Type', 'application/json')
+     * @param string $name Header name
+     * @param string $content Header content
+     */
+    public function setHeader($name, $content){
+        Doo::app()->setHeader($name, $content);
+    }    
+    
+    /**
+     * Set raw header. eg. 'HTTP/1.1 200 OK'
+     * @param string $rawHeader Header content
+     * @param bool $replace Whether to replace the same header that is previously set
+     * @param int $code HTTP status code
+     */    
+    public function setRawHeader($rawHeader, $replace=true, $code=null){
+        Doo::app()->setRawHeader($rawHeader, $replace, $code);
     }
 
     /**
@@ -250,15 +264,6 @@ class DooController {
 	}
 
     /**
-     * Use acceptType() instead
-     * @deprecated deprecated since version 1.3
-     * @return string Client accept type
-     */
-    public function accept_type(){
-        return $this->acceptType();
-    }
-
-    /**
      * Get the client specified accept type from the header sent
      *
      * <p>Instead of appending a extension name like '.json' to a URL,
@@ -266,6 +271,8 @@ class DooController {
      * @return string Client accept type
      */
     public function acceptType(){
+        if(empty($_SERVER["HTTP_ACCEPT"])) return NULL;
+		
         $type = array(
             '*/*'=>'*',
             'html'=>'text/html,application/xhtml+xml',
@@ -355,7 +362,7 @@ class DooController {
 							'tsv'=>'text/tsv'
 						);
         if(isset($extensions[$type]))
-            header("Content-Type: {$extensions[$type]}; charset=$charset");
+            $this->setRawHeader("Content-Type: {$extensions[$type]}; charset=$charset");
     }
 
     /**
@@ -402,7 +409,25 @@ class DooController {
                 return $this->params[$valueIndex];
         }
     }
-
+    
+    /**
+     * Retrieve an array of keys & values from URI accessed from an auto route.
+     * Example with a controller named UserController and a method named listAll():
+     * <code>
+     * //URI is http://localhost/user/list-all/id/11/type/admin
+     * $this->getKeyParam( array('id', 'type') );   //returns array('id'=>11, 'type'=>'admin')
+     * </code>
+     * @param type $keys
+     * @return type 
+     */
+    public function getKeyParams($keys){
+        $params = array();        
+        foreach($keys as $k){
+            $params[$k] = $this->getKeyParam($k);
+        }
+        return $params;        
+    }
+    
     /**
      * Controls the automated view rendering process.
      */
@@ -448,14 +473,6 @@ class DooController {
             return TRUE;
         }
         return FALSE;
-    }
-
-    /**
-     * Use isSSL() instead
-     * @deprecated deprecated since version 1.3
-     */
-    public function is_SSL(){
-        return $this->isSSL();
     }
 
     /**
@@ -628,11 +645,5 @@ class DooController {
 		}
         return $rs;
     }
-
-	public function  __call($name,  $arguments) {
-		if ($name == 'renderLayout') {
-			throw new Exception('renderLayout is no longer supported by DooController. Please use $this->view()->renderLayout instead');
-		}
-	}
-
+    
 }

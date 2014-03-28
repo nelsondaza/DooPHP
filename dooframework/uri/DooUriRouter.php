@@ -168,9 +168,9 @@ class DooUriRouter{
 
         if($route[0]==='redirect'){
             if(sizeof($route)===2)
-                self::redirect($route[1]);
+                return array('redirect' => array($route[1], 302));
             else
-                self::redirect($route[1],true,$route[2]);
+                return array('redirect' => array($route[1], $route[2]));
         }
 
         if(isset($route['auth'])===true){
@@ -203,13 +203,13 @@ class DooUriRouter{
     public static function redirect($location, $exit=true, $code=302, $headerBefore=NULL, $headerAfter=NULL){
         if($headerBefore!==null){
 			foreach($headerBefore as $h){
-                header($h);
+                Doo::app()->setRawHeader($h);
 			}
         }
-        header("Location: $location", true, $code);
+        Doo::app()->setRawHeader("Location: $location", true, $code);
         if($headerAfter!==null){
 			foreach($headerAfter as $h){
-                header($h);
+                Doo::app()->setRawHeader($h);
 			}
         }
         if($exit)
@@ -261,17 +261,23 @@ class DooUriRouter{
 
 		// Remove Subfolder
 		$requestedUri = substr($requestedUri, strlen($subfolder)-1);
+		if($requestedUri === false){
+			$requestedUri = substr($requestedUri . '/', strlen($subfolder)-1);	
+			if($requestedUri===false){
+				$requestedUri = '/';	
+			}		
+		}
 		//$this->log('Trimmed off subfolder from Request Uri to give: ' . $requestedUri);
 
 		// Remove index.php from URL if it exists
-		if (0 === strpos($requestedUri, '/index.php')) {
+		if (strpos($requestedUri, '/index.php') === 0) {
 			$requestedUri = substr($requestedUri, 10);
 			//$this->log('Trimmed off the /index.php from Request Uri to give: ' . $requestedUri);
-			if ($requestedUri == '') {
+			if (empty($requestedUri) === TRUE) {
 				$requestedUri = '/';
 			}
 		}
-
+        
 		// Remove any trailing slashes from Uri except the first / of a uri (Root)
 		//Strip out the additional slashes found at the end. If first character is / then leaves it alone
 		$end = strlen($requestedUri) - 1;
@@ -364,6 +370,10 @@ class DooUriRouter{
 				// If first part of uri not match first part of route then skip.
 				// We expect ALL routes at this stage to begin with a static segment.
 				// Note: We exploded with a leading / so element 0 in both arrays is an empty string
+
+                //Skip checking forif catchall is used and URI is http://domain/index.phpxxxxxxx
+                if($requestedUri[0]!=='/') continue;
+                
 				if (str_replace($uriExtension, "", $uriParts[1]) !== $routeParts[1]) {
 					//$this->log('First path not match');
 					continue;

@@ -34,6 +34,45 @@ class DooWebApp{
         $this->throwHeader( $this->routeTo() );
     }
     
+    /**
+     * Run the web application from a http request or a CLI execution.
+     */
+    public function autorun(){
+        $opt = getopt('u:');
+        if(isset($opt['u'])===true){
+            $this->runFromCli();
+        }else{
+            $this->run();
+        }
+    }
+    
+    /**
+     * Run the web application from a CLI execution. Execution through this method will set Doo::conf()->FROM_CLI to true.
+     * Options required in CLI:
+     * <code>
+     *   // -u (required) URI: any route you have in your application
+     *   -u="/any/uri/route/"
+     * 
+     *   // -m (optional) Request method: post, put, get, delete. Default is get.
+     *   -m="get"
+     * </code>
+     */
+    public function runFromCli(){
+        $opt = getopt('u:m::');
+        if(isset($opt['u'])===true){
+            $uri = $opt['u'];
+
+            if($uri[0]!='/')
+                $uri = '/' . $uri;
+
+            Doo::conf()->SUBFOLDER = '/';
+            $_SERVER['REQUEST_URI'] = $uri;
+            $_SERVER['REQUEST_METHOD'] = (isset($opt['m'])) ? $opt['m'] : 'GET';
+            Doo::conf()->FROM_CLI = true;
+            $this->run();
+        }        
+    }
+    
      /**
      * Handles the routing process.
      * Auto routing, sub folder, subdomain, sub folder on subdomain are supported.
@@ -44,6 +83,12 @@ class DooWebApp{
         Doo::loadCore('uri/DooUriRouter');
         $router = new DooUriRouter;
         $routeRs = $router->execute($this->route,Doo::conf()->SUBFOLDER);
+        
+        if(isset($routeRs['redirect'])===true){
+            list($redirUrl, $redirCode) = $routeRs['redirect'];
+            DooUriRouter::redirect($redirUrl, true, $redirCode);
+            return;
+        }
 
         if($routeRs[0]!==null && $routeRs[1]!==null){
             //dispatch, call Controller class
@@ -121,10 +166,15 @@ class DooWebApp{
             list($controller_name, $method_name, $method_name_ori, $params, $moduleName )= $router->auto_connect(Doo::conf()->SUBFOLDER, (isset($this->route['autoroute_alias'])===true)?$this->route['autoroute_alias']:null );
 
             if(empty($this->route['autoroute_force_dash'])===false){
-                if($method_name!=='index' && $method_name===$method_name_ori && ctype_lower($method_name_ori)===false){
+                if($method_name!=='index' && $method_name===$method_name_ori && $method_name_ori[0]!=='_' && ctype_lower($method_name_ori)===false){
                     $this->throwHeader(404);
                     return;
                 }
+            }
+            
+            if(in_array($method_name, array('setHeader','setRawHeader','initPutVars','load','db','acl','beforeRun','cache','saveRendered','saveRenderedC','view','render','renderc','language','acceptType','setContentType','clientIP','afterRun','getKeyParam','getKeyParams','viewRenderAutomation','isAjax','isSSL','toXML','toJSON'))){ 
+                $this->throwHeader(404);
+                return;
             }
 
             if(isset($moduleName)===true){
@@ -138,7 +188,16 @@ class DooWebApp{
                 require_once Doo::conf()->BASE_PATH ."controller/DooController.php";
                 require_once $controller_file;
 
-				$methodsArray = get_class_methods($controller_name);
+                $methodsArray = get_class_methods($controller_name);
+                
+                //if controller name matches 2 classes with the same name, namespace and W/O namespace
+                if($methodsArray!==null){
+                    $unfoundInMethods = (in_array($method_name, $methodsArray)===false && 
+                                         in_array($method_name .'_'. strtolower($_SERVER['REQUEST_METHOD']), $methodsArray)===false );
+                    if($unfoundInMethods){
+                        $methodsArray = null;
+                    }
+                }
 
                 //if the method not in controller class, check for a namespaced class with the same file name.
                 if($methodsArray===null && isset(Doo::conf()->APP_NAMESPACE_ID)===true){
@@ -147,16 +206,16 @@ class DooWebApp{
                     }else{
                         $controller_name = Doo::conf()->APP_NAMESPACE_ID . '\\controller\\' . $controller_name;
                     }
-    				$methodsArray = get_class_methods($controller_name);   
+                    $methodsArray = get_class_methods($controller_name);   
                 }
                 
                 //if method not found in both both controller and namespaced controller, 404 error
                 if($methodsArray===null){
                     if(isset(Doo::conf()->PROTECTED_FOLDER_ORI)===true)
                         Doo::conf()->PROTECTED_FOLDER = Doo::conf()->PROTECTED_FOLDER_ORI;
-					$this->throwHeader(404);
-					return;                    
-                }
+                        $this->throwHeader(404);
+                        return;                    
+                }                
             }
             else if(isset($moduleName)===true && isset(Doo::conf()->APP_NAMESPACE_ID)===true){
                 if(isset(Doo::conf()->PROTECTED_FOLDER_ORI)===true)
@@ -165,14 +224,14 @@ class DooWebApp{
                 $controller_file = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . '/controller/'.$moduleName.'/'.$controller_name .'.php';                 
                 
                 if(file_exists($controller_file)===false){
-					$this->throwHeader(404);
-					return;                    
+                    $this->throwHeader(404);
+                    return;                    
                 }                
                 $controller_name = Doo::conf()->APP_NAMESPACE_ID .'\\controller\\'.$moduleName.'\\'.$controller_name;                
                 #echo 'module = '.$moduleName.'<br>';
                 #echo $controller_file.'<br>';                
                 #echo $controller_name.'<br>';                   
-				$methodsArray = get_class_methods($controller_name);                
+                $methodsArray = get_class_methods($controller_name);                
             }            
             else{
                 if(isset(Doo::conf()->PROTECTED_FOLDER_ORI)===true)
@@ -197,7 +256,7 @@ class DooWebApp{
             if( $inRestMethod===true ){
                 $method_name = $restMethod;
             }
-
+            
             $controller = new $controller_name;
 
             //if autoroute in this controller is disabled, 404 error
@@ -205,6 +264,7 @@ class DooWebApp{
                 if(isset(Doo::conf()->PROTECTED_FOLDER_ORI)===true)
                     Doo::conf()->PROTECTED_FOLDER = Doo::conf()->PROTECTED_FOLDER_ORI;
                 $this->throwHeader(404);
+                return;
             }
 
             if($params!=null)
@@ -224,6 +284,7 @@ class DooWebApp{
         }
         else{
             $this->throwHeader(404);
+            return;
         }
     }
 
@@ -245,7 +306,7 @@ class DooWebApp{
         }
 
         if($is404===true)
-            header('HTTP/1.1 404 Not Found');
+            $this->setRawHeader('HTTP/1.1 404 Not Found');
         //$this->routeTo();
         $this->throwHeader( $this->routeTo() );
     }
@@ -429,7 +490,7 @@ class DooWebApp{
             if(is_int($code)){
                 if($code===404){
                     //Controller return 404, send 404 header, include file if ERROR_404_DOCUMENT is set by user
-                    header('HTTP/1.1 404 Not Found');
+                    $this->setRawHeader('HTTP/1.1 404 Not Found');
                     if(!empty(Doo::conf()->ERROR_404_DOCUMENT)){
                         include Doo::conf()->SITE_PATH . Doo::conf()->ERROR_404_DOCUMENT;
                     }
@@ -459,18 +520,42 @@ class DooWebApp{
                     $this->reroute($code[0],true);
                     exit;
                 }
-                // if array('http://location.to.redirect', 302), Moved Temporarily is sent before Location:
+                // if array('http://location.to.redirect', 302), 302 Found is sent before Location:
                 elseif($code[1]===302){
-                    DooUriRouter::redirect($code[0],true, $code[1], array("HTTP/1.1 302 Moved Temporarily"));
+                    DooUriRouter::redirect($code[0],true, $code[1], array("HTTP/1.1 302 Found"));
                 }
-                //else redirect with the http status defined,eg. 307
-                else{
+                //else redirect with the http status defined,eg. 307 Moved Temporarily
+                else if($code[1] > 299 && $code[1] < 400){
                     DooUriRouter::redirect($code[0],true, $code[1]);
+                }
+                else{
+                    if(!empty($code[1]))
+                        $this->setRawHeader('', true, $code[1]);
+                    return $this->reroute($code[0]);                    
                 }
             }
         }
     }
+    
+    /**
+     * Set header. eg. setHeader('Content-Type', 'application/json')
+     * @param string $name Header name
+     * @param string $content Header content
+     */
+    public function setHeader($name, $content){
+        header($name .': '. $content);
+    }
 
+    /**
+     * Set raw header. eg. 'HTTP/1.1 200 OK'
+     * @param string $rawHeader Header content
+     * @param bool $replace Whether to replace the same header that is previously set
+     * @param int $code HTTP status code
+     */    
+    public function setRawHeader($rawHeader, $replace=true, $code=null){
+        header($rawHeader, $replace, $code);        
+    }
+    
     /**
      * To debug variables with DooPHP's diagnostic view
      * @param mixed $var The variable to view in diagnostics.

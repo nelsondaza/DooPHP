@@ -94,14 +94,27 @@ class DooSession {
 		$this->_sessionStarted = true;
 	}
 
+
+	/**
+	* Flush old and start a new session
+	*
+	* @return void
+	*/
+	public function startNew() {
+    session_regenerate_id(TRUE);
+    session_destroy();
+    unset($_SESSION);
+    $this->start();
+	}
+
 	/**
 	* Checks if session started
 	*
 	* @return boolean
 	*/
-	public static function isStarted()
+	public function isStarted()
 	{
-		if (isset($_SESSION)) {
+		if (!empty($_SESSION[$this->_namespace]) && $this->_sessionStarted) {
 			return true;
 		} else {
 			return false;

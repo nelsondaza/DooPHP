@@ -4,9 +4,17 @@
 * [Website](http://doophp.com/)
 * [Documentation](http://doophp.com/doc)
 * [Benchmark](http://doophp.com/benchmark)
-* [Google Code](http://code.google.com/p/doophp/)
 * [Twitter](http://twitter.com/doophp)
-* Version: 1.4.1
+*
+* [Google Code](http://code.google.com/p/doophp/)
+* [GitHub](https://github.com/darkredz/DooPHP/)
+* Version: 1.5
+
+	`Joined whit Google Code on:` [Issue 95](http://code.google.com/p/doophp/issues/detail?id=95&can=1&sort=-id): DooSession needs a more robust way to check for status of session
+
+	`Joined whit GitHub on:` [commit b5f89db](https://github.com/darkredz/DooPHP/commit/b5f89db87ea41a7f14a54c7d974fdf098f290a12): "Looks like an E-mail RegExp adjustment" -b5f89db87ea41a7f14a54c7d974fdf098f290a12-
+
+
 
 DooPHP framework is one of the fastest, if not the fastest PHP framework available. It enables developers at all levels to rapidly develop robust web 2.0 applications.
 

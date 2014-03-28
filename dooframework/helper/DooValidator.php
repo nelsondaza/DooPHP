@@ -35,8 +35,8 @@
  *               'email'=>array('email'),
  *               'age'=>array('between',13,200),
  *               'today'=>array('date','mm/dd/yy'),
- *
- *               //Custom rules, static method required
+ 
+* *               //Custom rules, static method required
  *               'a'=>array('custom', 'MainController::isA'),
  *
  *               //Custom Required field message.
@@ -135,25 +135,25 @@ class DooValidator {
 	 * Only ensure required fields are non null / accept not null on required
 	 */
 	const REQ_MODE_NULL_ONLY = 'null';
-    
+
     /**
      * Default require message to display field name "first_name is required."
      */
     const REQ_MSG_FIELDNAME = 'fieldname';
-    
+
     /**
      * Default require message to display "This is required."
      */
     const REQ_MSG_THIS = 'this';
-    
+
     /**
      * Default require message to convert field name with underscore to words. eg(field = first_name). "First name is required."
-     */    
+     */
     const REQ_MSG_UNDERSCORE_TO_SPACE = 'underscore';
-    
+
     /**
      * Default require message to convert field name with camelcase to words. eg(field = firstName). "First name is required."
-     */    
+     */
     const REQ_MSG_CAMELCASE_TO_SPACE = 'camelcase';
 
     /**
@@ -167,13 +167,13 @@ class DooValidator {
 	 * @var string empty/null
 	 */
 	public $requireMode = 'nullempty';
-    
+
     /**
      * Default method to generate error message for a required field.
      * @var string
      */
     public $requiredMsgDefaultMethod = 'underscore';
-    
+
     /**
      * Default error message suffix for a required field.
      * @var string
@@ -204,9 +204,9 @@ class DooValidator {
     public static function getAvailableRules(){
         return array('alpha', 'alphaNumeric', 'between', 'betweenInclusive', 'ccAmericanExpress', 'ccDinersClub', 'ccDiscover', 'ccMasterCard',
                     'ccVisa', 'colorHex', 'creditCard', 'custom', 'date', 'dateBetween', 'datetime', 'digit', 'email', 'equal', 'equalAs', 'float',
-                    'greaterThan', 'greaterThanOrEqual', 'ip', 'integer', 'lessThan', 'lessThanOrEqual', 'lowercase', 'max',
+                    'greaterThan', 'greaterThanOrEqual', 'hostname', 'ip', 'integer', 'lessThan', 'lessThanOrEqual', 'lowercase', 'max',
                     'maxlength', 'min', 'minlength', 'notEmpty', 'notEqual', 'notNull', 'password', 'passwordComplex', 'price', 'regex',
-                    'uppercase', 'url', 'username','dbExist','dbNotExist','alphaSpace','notInList','inList'
+                    'uppercase', 'url', 'username','dbExist','dbNotExist','alphaSpace','notInList','inList', 'serverName'
                 );
     }
 
@@ -374,7 +374,7 @@ class DooValidator {
             return $errors;
         }
     }
-    
+
     /**
      * Set default settings to display the default error message for required fields
      * @param type $displayMethod Default error message display method. use: DooValidator::REQ_MSG_UNDERSCORE_TO_SPACE, DooValidator::REQ_MSG_CAMELCASE_TO_SPACE, DooValidator::REQ_MSG_THIS, DooValidator::REQ_MSG_FIELDNAME
@@ -384,7 +384,7 @@ class DooValidator {
         $this->requiredMsgDefaultMethod = $displayMethod;
         $this->requiredMsgDefaultSuffix = $suffix;
     }
-    
+
     /**
      * Get the default error message for required field
      * @param string $fieldname Name of the field
@@ -393,13 +393,13 @@ class DooValidator {
     public function getRequiredFieldDefaultMsg($fieldname){
         if($this->requiredMsgDefaultMethod==DooValidator::REQ_MSG_UNDERSCORE_TO_SPACE)
             return ucfirst(str_replace('_', ' ', $fieldname)) . $this->requiredMsgDefaultSuffix;
-        
+
         if($this->requiredMsgDefaultMethod==DooValidator::REQ_MSG_THIS)
-            return 'This ' . $this->requiredMsgDefaultSuffix;        
-        
+            return 'This ' . $this->requiredMsgDefaultSuffix;
+
         if($this->requiredMsgDefaultMethod==DooValidator::REQ_MSG_CAMELCASE_TO_SPACE)
             return ucfirst(strtolower(preg_replace('/([A-Z])/', ' $1', $fieldname))) . $this->requiredMsgDefaultSuffix;
-        
+
         if($this->requiredMsgDefaultMethod==DooValidator::REQ_MSG_FIELDNAME)
             return $fieldname . $this->requiredMsgDefaultSuffix;
     }
@@ -542,7 +542,7 @@ class DooValidator {
      * @return string
      */
     public function testPasswordComplex($value, $msg=null){
-        if(!preg_match('A(?=[-_a-zA-Z0-9]*?[A-Z])(?=[-_a-zA-Z0-9]*?[a-z])(?=[-_a-zA-Z0-9]*?[0-9])[-_a-zA-Z0-9]{6,32}z', $value)){
+        if(!preg_match('/\A(?=[-_a-zA-Z0-9]*?[A-Z])(?=[-_a-zA-Z0-9]*?[a-z])(?=[-_a-zA-Z0-9]*?[0-9])[-_a-zA-Z0-9]{6,32}\Z/', $value)){
             if($msg!==null) return $msg;
             return 'Password must contain at least one upper case letter, one lower case letter and one digit. It must consists of 6 or more letters, digits, underscores and hyphens.';
         }
@@ -591,6 +591,51 @@ class DooValidator {
         if (!preg_match('/^(([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/',$value)) {
             if($msg!==null) return $msg;
             return 'Invalid IP address!';
+        }
+    }
+
+    /**
+     * Validate a hostname as per RFC 952.
+     *
+     * @param string $value Value of data to be validated
+     * @param string $msg Custom error message
+     * @return string
+     */
+    public function testHostname($value, $msg=null){
+        //1mx.record.com
+        if (!preg_match('/^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/',$value)) {
+            if($msg!==null) return $msg;
+            return 'Invalid hostname!';
+        }
+    }
+
+    /**
+     * Validate a server name that does not allow numbers at the start.
+     *
+     * @param string $value Value of data to be validated
+     * @param string $msg Custom error message
+     * @return string
+     */
+    public function testServerName($value, $msg=null){
+        //server.example.com
+        if (!preg_match('/^[A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*$/',$value)) {
+            if($msg!==null) return $msg;
+            return 'Invalid server name!';
+        }
+    }
+
+    /**
+     * Validate a subdomain.
+     *
+     * @param string $value Value of data to be validated
+     * @param string $msg Custom error message
+     * @return string
+     */
+    public function testSubdomain($value, $msg=null){
+        //something.example.com
+        if (!preg_match('/^[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+){2}$/',$value)) {
+            if($msg!==null) return $msg;
+            return 'Invalid subdomain!';
         }
     }
 
@@ -819,7 +864,7 @@ class DooValidator {
      */
     public function testFloat($value, $decimal='', $msg=null){
         // any amount of decimal
-        if (!preg_match('/^[0-9]*\\.?[0-9]{0,'.$decimal.'}$/', $value)){
+        if (!preg_match('/^[-]?[0-9]*\\.?[0-9]{0,'.$decimal.'}$/', $value)){
             if($msg!==null) return $msg;
             return 'Input is not a valid float value.';
         }

@@ -92,17 +92,27 @@ class DooSmartModel{
      * @var string
      */
     public static $cacheMode;
-
+    
+    /**
+     * DB object
+     * @var DooSqlMagic
+     */
+    protected $dbObject;
+    
     /**
      * Constructor of a Model. Sets the model class properties with a list of keys & values.
      * @param array $properties Array of data (keys and values) to set the model properties
+     * @param DooSqlMagic $dbOject DB object to be used instead of the default DooSqlMagic instance from Doo::db()
      */
-    public function __construct($properties=null){
+    public function __construct($properties=null, $dbOject=null){
         if($properties!==null){
             foreach($properties as $k=>$v){
                 if(in_array($k, $this->_fields))
                     $this->{$k} = $v;
             }
+        }
+        if($dbOject!==null){
+            $this->dbObject = $dbOject;        
         }
     }
 
@@ -196,7 +206,7 @@ class DooSmartModel{
             }
         }
         else{
-            if($rs = Doo::cache(self::$cacheMode)->get(Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_PATH . $id)){
+            if($rs = Doo::cache(self::$cacheMode)->get(Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . $id)){
                 if($rs instanceof ArrayObject)
                     return $rs->getArrayCopy();
                 return $rs;
@@ -219,18 +229,18 @@ class DooSmartModel{
         }
         else{
             //need to store the list of Model cache to be purged later on for Memory based cache.
-            $keysId = Doo::conf(self::$cacheMode)->SITE_PATH . 'mdl_'.self::$className;
+            $keysId = Doo::conf(self::$cacheMode)->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . 'mdl_'.self::$className;
             if($keys = Doo::cache(self::$cacheMode)->get($keysId)){
                 $listOfModelCache = $keys->getArrayCopy();
-                $listOfModelCache[] = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_PATH . $id;
+                $listOfModelCache[] = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . $id;
             }else{
                 $listOfModelCache = array();
-                $listOfModelCache[] = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_PATH . $id;
+                $listOfModelCache[] = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . $id;
             }
             if(is_array($value))
-                Doo::cache(self::$cacheMode)->set(Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_PATH . $id, new ArrayObject($value));
+                Doo::cache(self::$cacheMode)->set(Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . $id, new ArrayObject($value));
             else
-                Doo::cache(self::$cacheMode)->set(Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_PATH . $id, $value);
+                Doo::cache(self::$cacheMode)->set(Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . $id, $value);
             Doo::cache(self::$cacheMode)->set($keysId, new ArrayObject($listOfModelCache));
         }
     }
@@ -257,7 +267,7 @@ class DooSmartModel{
         }
         else{
             //loop and get the list and delete those start with the Model name, then delete them
-            $keysId = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_PATH . 'mdl_'.self::$className;
+            $keysId = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . 'mdl_'.self::$className;
             if($keys = Doo::cache(self::$cacheMode)->get($keysId)){
                 $listOfModelCache = $keys->getArrayCopy();
                 foreach($listOfModelCache as $k){
@@ -274,7 +284,7 @@ class DooSmartModel{
             }else{
                 foreach($rmodels as $r){
                     //loop and get the list and delete those start with the Model name, then delete them
-                    $keysId = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_PATH . 'mdl_'.get_class($r);
+                    $keysId = Doo::conf()->SITE_PATH . Doo::conf()->PROTECTED_FOLDER . 'mdl_'.get_class($r);
                     if($keys = Doo::cache(self::$cacheMode)->get($keysId)){
                         $listOfModelCache = $keys->getArrayCopy();
                         foreach($listOfModelCache as $k){
@@ -310,28 +320,52 @@ class DooSmartModel{
      * @return DooSqlMagic
      */
     public function db(){
-        return Doo::db();
+        if($this->dbObject===null)
+            return Doo::db();        
+        return $this->dbObject;
+    }
+    
+    public function getDataObject(){
+        $obj = new stdClass();
+        foreach($this->_fields as $field)
+            $obj->{$field} = $this->{$field};
+        return $obj;
+    }
+
+    public function getDataArray(){
+        $obj = array();
+        foreach($this->_fields as $field)
+            $obj[$field] = $this->{$field};
+        return $obj;
+    }
+    
+    /**
+     * Set DB object to be used instead of the default DooSqlMagic instance from Doo::db()
+     * @param DooSqlMagic $dbOject DB object
+     */
+    public function setDb($dbObject){
+        $this->dbObject = $dbObject;
     }
 
     /**
      * Commits a transaction. Transactions can be nestable.
      */
     public function commit(){
-        Doo::db()->commit();
+        $this->db()->commit();
     }
 
     /**
      * Initiates a transaction. Transactions can be nestable.
      */
     public function beginTransaction(){
-        Doo::db()->beginTransaction();
+        $this->db()->beginTransaction();
     }
 
     /**
      * Rolls back a transaction. Transactions can be nestable.
      */
     public function rollBack(){
-        Doo::db()->rollBack();
+        $this->db()->rollBack();
     }
 
     /**
@@ -353,7 +387,7 @@ class DooSmartModel{
         $id = self::toCacheId($this, 'count', $options);
         if($rs = self::getCache($id)) return $rs;
 
-        $value = Doo::db()->find($this, $options);
+        $value = $this->db()->find($this, $options);
         $value =  $value['_doototal'];
 
         //if is null or false or 0 then dun store it because the cache can't differenciate the Empty values
@@ -402,7 +436,7 @@ class DooSmartModel{
         $id = self::toCacheId($this, 'find', $opt);
         if($rs = self::getCache($id)) return $rs;
 
-        $value = Doo::db()->find($this, $opt);
+        $value = $this->db()->find($this, $opt);
 
         //if is null or false or 0 then dun store it because the cache can't differenciate the Empty values
         if($value) self::setCache($id, $value);
@@ -440,11 +474,11 @@ class DooSmartModel{
             $opt['limit'] = 1;
             $id = self::toCacheId($this, 'find', $opt);
             if($rs = self::getCache($id)) return $rs;
-            $value = Doo::db()->find($this, $opt);
+            $value = $this->db()->find($this, $opt);
         }else{
             $id = self::toCacheId($this, 'find', array('limit'=>1));
             if($rs = self::getCache($id)) return $rs;
-            $value = Doo::db()->find($this, array('limit'=>1));
+            $value = $this->db()->find($this, array('limit'=>1));
         }
 
         //if is null or false or 0 then dun store it because the cache can't differenciate the Empty values
@@ -503,11 +537,11 @@ class DooSmartModel{
             }
             $id = self::toCacheId($this, 'find', $options);
             if($rs = self::getCache($id)) return $rs;
-            $value = Doo::db()->find($this, $options);
+            $value = $this->db()->find($this, $options);
         }else{
             $id = self::toCacheId($this, 'find', array('limit'=>$limit));
             if($rs = self::getCache($id)) return $rs;
-            $value = Doo::db()->find($this, array('limit'=>$limit));
+            $value = $this->db()->find($this, array('limit'=>$limit));
         }
 
         //if is null or false or 0 then dun store it because the cache can't differenciate the Empty values
@@ -568,7 +602,7 @@ class DooSmartModel{
             $id = self::toCacheId($this, 'relate' . $rcls, $options);
         }
         if($rs = self::getCache($id)) return $rs;
-        $value = Doo::db()->relate($this, $rmodel, $options);
+        $value = $this->db()->relate($this, $rmodel, $options);
 
         //if is null or false or 0 then dun store it because the cache can't differenciate the Empty values
         if($value) self::setCache($id, $value);
@@ -589,7 +623,7 @@ class DooSmartModel{
      * @return mixed A list of model objects of the queried result
      */
 	public function relateMany($rmodel, $opt=null){
-        return Doo::db()->relateMany($this, $rmodel, $opt);
+        return $this->db()->relateMany($this, $rmodel, $opt);
     }
 
     /**
@@ -606,7 +640,7 @@ class DooSmartModel{
      * @return mixed A list of model objects of the queried result
      */
 	public function relateExpand($rmodel, $opt=null){
-        return Doo::db()->relateExpand($this, $rmodel, $opt);
+        return $this->db()->relateExpand($this, $rmodel, $opt);
     }
 
     /**
@@ -687,16 +721,16 @@ class DooSmartModel{
                         $args[1]['limit'] = 1;
                     $id = self::toCacheId($obj, 'find', $args[1]);
                     if($rs = self::getCache($id)) return $rs;
-                    $value = Doo::db()->find($obj, $args[1]);
+                    $value = $this->db()->find($obj, $args[1]);
                 }else{
                     if(isset($first)){
                         $id = self::toCacheId($obj, 'find', $first);
                         if($rs = self::getCache($id)) return $rs;
-                        $value = Doo::db()->find($obj, $first);
+                        $value = $this->db()->find($obj, $first);
                     }else{
                         $id = self::toCacheId($obj, 'find');
                         if($rs = self::getCache($id)) return $rs;
-                        $value = Doo::db()->find($obj);
+                        $value = $this->db()->find($obj);
                     }
                 }
             }
@@ -712,16 +746,16 @@ class DooSmartModel{
                         $args[$i]['limit'] = 1;
                     $id = self::toCacheId($obj, 'find', $args[$i]);
                     if($rs = self::getCache($id)) return $rs;
-                    $value = Doo::db()->find($obj, $args[$i]);
+                    $value = $this->db()->find($obj, $args[$i]);
                 }else{
                     if(isset($first)){
                         $id = self::toCacheId($obj, 'find', $first);
                         if($rs = self::getCache($id)) return $rs;
-                        $value = Doo::db()->find($obj, $first);
+                        $value = $this->db()->find($obj, $first);
                     }else{
                         $id = self::toCacheId($obj, 'find');
                         if($rs = self::getCache($id)) return $rs;
-                        $value = Doo::db()->find($obj);
+                        $value = $this->db()->find($obj);
                     }
                 }
             }
@@ -760,32 +794,32 @@ class DooSmartModel{
                 Doo::loadModel($relatedClass);
                 $id = self::toCacheId($this, 'relate' . $relatedClass);
                 if($rs = self::getCache($id)) return $rs;
-                $value = Doo::db()->relate( $this, $relatedClass);
+                $value = $this->db()->relate( $this, $relatedClass);
             }
             else if(sizeof($args)===1){
                 if(is_array($args[0])){
                     Doo::loadModel($relatedClass);
                     $id = self::toCacheId($this, 'relate' . $relatedClass, $args[0]);
                     if($rs = self::getCache($id)) return $rs;
-                    $value = Doo::db()->relate( $this, $relatedClass, $args[0]);
+                    $value = $this->db()->relate( $this, $relatedClass, $args[0]);
                 }else{
                     if(isset($first)){
                         Doo::loadModel($relatedClass);
                         $id = self::toCacheId($args[0], 'relate' . $relatedClass, $first);
                         if($rs = self::getCache($id)) return $rs;
-                        $value = Doo::db()->relate( $args[0], $relatedClass, $first);
+                        $value = $this->db()->relate( $args[0], $relatedClass, $first);
                     }else{
                         Doo::loadModel($relatedClass);
                         $id = self::toCacheId($args[0], 'relate' . $relatedClass);
                         if($rs = self::getCache($id)) return $rs;
-                        $value = Doo::db()->relate( $args[0], $relatedClass);
+                        $value = $this->db()->relate( $args[0], $relatedClass);
                     }
                 }
             }else{
                 Doo::loadModel($relatedClass);
                 $id = self::toCacheId($args[0], 'relate' . $relatedClass, $args[1]);
                 if($rs = self::getCache($id)) return $rs;
-                $value = Doo::db()->relate( $args[0], $relatedClass, $args[1]);
+                $value = $this->db()->relate( $args[0], $relatedClass, $args[1]);
             }
 
             //if is null or false or 0 then dun store it because the cache can't differenciate the Empty values
@@ -946,7 +980,7 @@ class DooSmartModel{
      */
     public function insert(){
         $this->purgeCache();
-        return Doo::db()->insert($this);
+        return $this->db()->insert($this);
     }
 
     /**
@@ -956,7 +990,7 @@ class DooSmartModel{
      */
     public function insertAttributes($data){
         $this->purgeCache();
-        return Doo::db()->insertAttributes($this, $data);
+        return $this->db()->insertAttributes($this, $data);
     }
     
     /**
@@ -974,7 +1008,7 @@ class DooSmartModel{
      */
     public function relatedInsert($rmodels){
         $this->purgeCache($rmodels);
-        return Doo::db()->relatedInsert($this, $rmodels);
+        return $this->db()->relatedInsert($this, $rmodels);
     }
 
     /**
@@ -984,7 +1018,7 @@ class DooSmartModel{
      */
     public function update($opt=NULL){
         $this->purgeCache();
-        return Doo::db()->update($this, $opt);
+        return $this->db()->update($this, $opt);
     }
 
     /**
@@ -992,9 +1026,17 @@ class DooSmartModel{
      * @param array $opt Associative array of options to generate the UPDATE statement. Supported: <i>where, limit, field, param</i>
      * @return int Number of rows affected
      */
-    public function update_attributes($data, $opt=NULL){
+    public function updateAttributes($data, $opt=NULL){
         $this->purgeCache();
-        return Doo::db()->update_attributes($this, $data, $opt);
+        return $this->db()->updateAttributes($this, $data, $opt);
+    }
+     
+    /**
+     * Use updateAttributes() instead
+     * @deprecated deprecated since version 1.3
+     */
+    public function update_attributes($data, $opt=NULL){
+        return $this->insertAttributes($data, $opt);        
     }
 
     /**
@@ -1004,7 +1046,7 @@ class DooSmartModel{
      */
     public function relatedUpdate($rmodels, $opt=NULL){
         $this->purgeCache($rmodels);
-        return Doo::db()->relatedUpdate($this, $rmodels, $opt);
+        return $this->db()->relatedUpdate($this, $rmodels, $opt);
     }
 
     /**
@@ -1012,7 +1054,7 @@ class DooSmartModel{
      * @return int
      */
     public function lastInsertId(){
-        return Doo::db()->lastInsertId();
+        return $this->db()->lastInsertId();
     }
 
 	/**
@@ -1020,7 +1062,7 @@ class DooSmartModel{
 	 */
 	public function deleteAll() {
 		$this->purgeCache();
-		return Doo::db()->deleteAll($this);
+		return $this->db()->deleteAll($this);
 	}
 
     /**
@@ -1029,7 +1071,7 @@ class DooSmartModel{
      */
     public function delete($opt=NULL){
         $this->purgeCache();
-        return Doo::db()->delete($this, $opt);
+        return $this->db()->delete($this, $opt);
     }
 
 

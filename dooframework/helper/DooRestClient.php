@@ -76,11 +76,18 @@ class DooRestClient {
      * @param string $server_url
      * @return mixed
      */
-    public function connect_to($server_url=NULL){
+    public function connectTo($server_url=NULL){
         if($server_url==NULL)
             return $this->server_url;
         $this->server_url = $server_url;
         return $this;
+    }
+    
+    /**
+     * @deprecated 
+     */
+    public function connect_to($server_url=NULL){
+        return $this->connectTo($server_url);
     }
 
     /**
@@ -213,7 +220,7 @@ class DooRestClient {
             return $this->curl_opt['HTTPHEADER'];
 
         foreach($headerArr as $k=>$v){
-            $this->curl_opt['HTTPHEADER'] = array("$k: $v");
+            $this->curl_opt['HTTPHEADER'][] = $k . ': ' . $v;
         }
                 
         return $this;
@@ -269,7 +276,7 @@ class DooRestClient {
             else
                 return;
 
-        $this->curl_opt['HTTPHEADER'] = array("Accept: $type");
+        $this->curl_opt['HTTPHEADER'][] = "Accept: $type";
         return $this;
     }
 
@@ -296,7 +303,7 @@ class DooRestClient {
             else
                 return;
 
-        $this->curl_opt['HTTPHEADER'] = array("Content-Type: $type");
+        $this->curl_opt['HTTPHEADER'][] = "Content-Type: $type";
         return $this;
     }
 
@@ -508,7 +515,7 @@ class DooRestClient {
      * @param bool $domObject convert result in to DOMDOcument if True
      * @return SimpleXMLElement|DOMDocument
      */
-    public function xml_result($domObject=FALSE){
+    public function xmlResult($domObject=FALSE){
         if($domObject){
             $d = new DOMDocument('1.0','UTF-8');
             $d->loadXML($this->result);
@@ -516,14 +523,28 @@ class DooRestClient {
         }else
             return simplexml_load_string($this->result);
     }
+    
+    /**
+     * @deprecated
+     */
+    public function xml_result($domObject=FALSE){
+        return $this->xmlResult($domObject);
+    }
 
     /**
      * Convert the REST result to JSON object
      * @param bool $toArray convert result into assoc array if True.
      * @return object
      */
-    public function json_result($toArray=FALSE){
+    public function jsonResult($toArray=FALSE){
         return json_decode($this->result,$toArray);
+    }
+    
+    /**
+     * @deprecated
+     */
+    public function json_result($toArray=FALSE){
+        return $this->jsonResult($toArray);
     }
 
 }
