@@ -1,4 +1,5 @@
 ## HEAD DooPHP Framework Change Log
+![DooPHP](http://doophp.com/images/doologo.png "DooPHP")
 
 ### 1.5 (Marzo 28, 2014)
 

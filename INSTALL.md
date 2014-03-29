@@ -1,4 +1,5 @@
 ## INSTALL DOOPHP Web Framework
+![DooPHP](http://doophp.com/images/doologo.png "DooPHP")
 
 Thank you for using DooPHP - a high performance MVC based PHP framework.
 

@@ -1,5 +1,6 @@
 # Copyright (c) 2009-2011, Leng Sheng Hong
-### (leng@doophp.com)
+![DooPHP](http://doophp.com/images/doologo.png "DooPHP")
+#### (leng@doophp.com)
 **All rights reserved.**
 
 

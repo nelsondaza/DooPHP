@@ -1,5 +1,5 @@
 # DooPHP
-# ![DooPHP](http://doophp.com/images/doologo.png "DooPHP")
+![DooPHP](http://doophp.com/images/doologo.png "DooPHP")
 
 ## Introduction
 
