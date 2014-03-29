@@ -19,16 +19,18 @@ You shall see the following files and directories:
 
 
 If you placed it elsewhere, please change the app or demos configurations in protected/config/common.conf.php
-	
+
+```php
 	$config['SITE_PATH'] = 'C:/wamp/www/myfolderapp/';
 	$config['BASE_PATH'] = 'C:/wamp/www/dooframework/';
-	  
+```
 	  
 If your app is in a sub directory, please change the following setting:
-      
-	$config['SUBFOLDER'] = '/myfolderapp/';
 
-*This example can be accessed at http://localhost/myfolderapp/*
+```php
+	$config['SUBFOLDER'] = '/myfolderapp/';
+	// This example can be accessed at http://localhost/myfolderapp/
+```
 
 More details on installation can be found at http://www.doophp.com/doc/guide/start/install
 
@@ -55,9 +57,11 @@ Please visit the project website for tutorials, class reference
 and join discussions with other DooPHP users.
 
 <dl>
-  <dt>DooPHP</dt>
-  <dd>http://www.doophp.com</dd>
-  <dd>http://www.doophp.com/blog</dd>
-  <dd>http://www.doophp.com/forum</dd>
-  <dd>http://www.twitter.com/doophp</dd>
+	<dt><b>DooPHP</b></dt>
+	<dd>
+		http://www.doophp.com
+		<br>http://www.doophp.com/blog
+		<br>http://www.doophp.com/forum
+		<br>http://www.twitter.com/doophp
+	</dd>
 </dl>

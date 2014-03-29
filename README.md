@@ -16,7 +16,6 @@ HTTP Digest Authentication, a flexible template engine, logging & profiling tool
 * [Documentation](http://doophp.com/doc)
 * [Benchmark](http://doophp.com/benchmark)
 * [Twitter](http://twitter.com/doophp)
-
 * [Google Code](http://code.google.com/p/doophp/)
 * [GitHub](https://github.com/darkredz/DooPHP/)
 
