@@ -10,12 +10,12 @@ directory. You have to put it under the root directory for the app & demos to wo
 
 You shall see the following files and directories:
 
-	demos/                demos
-	dooframework/         framework source files
-	app/                  base of a project
-	LICENSE.txt           license of DooPHP (LICENSE.md on this GitHub Version)
-	README.txt            this file (README.md on this GitHub Version)
-	CHANGELOG.txt         changes made in this version (CHANGELOG.md on this GitHub Version)
+		demos/                demos
+		dooframework/         framework source files
+		app/                  base of a project
+		LICENSE.txt           license of DooPHP (LICENSE.md on this GitHub Version)
+		README.txt            this file (README.md on this GitHub Version)
+		CHANGELOG.txt         changes made in this version (CHANGELOG.md on this GitHub Version)
 
 
 If you placed it elsewhere, please change the app or demos configurations in protected/config/common.conf.php

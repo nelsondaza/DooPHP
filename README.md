@@ -1,5 +1,4 @@
-# DooPHP
-![DooPHP](http://doophp.com/images/doologo.png "DooPHP")
+# ![DooPHP](http://doophp.com/images/doologo.png "DooPHP") DooPHP
 
 ## Introduction
 
@@ -35,14 +34,14 @@ HTTP Digest Authentication, a flexible template engine, logging & profiling tool
 
 DooPHP believes in doing things as simple as possible. It is a framework for KISS lovers.
 
-    Confucius(孔子) once said,
-        "Life is really simple, but we insist on making it complicated."
+	    Confucius(孔子) once said,
+	        "Life is really simple, but we insist on making it complicated."
 
-    Leonardo da Vinci once said,
-        "Simplicity is the ultimate sophistication."
+	    Leonardo da Vinci once said,
+	        "Simplicity is the ultimate sophistication."
 
-    Albert Einstein once said,
-        "Everything should be made as simple as possible, but not simpler."
+	    Albert Einstein once said,
+	        "Everything should be made as simple as possible, but not simpler."
 
 _**So why do things the hard way?**_
 
