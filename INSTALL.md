@@ -10,12 +10,12 @@ directory. You have to put it under the root directory for the app & demos to wo
 
 You shall see the following files and directories:
 
-      demos/				demos
-      dooframework/			framework source files
-      app/        			base of a project
-      LICENSE.txt			license of DooPHP
-      README.txt			this file
-      CHANGELOG.txt			changes made in this version
+      demos/                demos
+      dooframework/         framework source files
+      app/                  base of a project
+      LICENSE.txt           license of DooPHP (LICENSE.md on this GitHub Version)
+      README.txt            this file (README.md on this GitHub Version)
+      CHANGELOG.txt         changes made in this version (CHANGELOG.md on this GitHub Version)
 
 
 If you placed it elsewhere, please change the app or demos configurations in protected/config/common.conf.php
@@ -26,18 +26,16 @@ If you placed it elsewhere, please change the app or demos configurations in pro
 	  
 If your app is in a sub directory, please change the following setting:
       
-	  $config['SUBFOLDER'] = '/myfolderapp/';
-
-*This example can be accessed at http://localhost/myfolderapp/
+	$config['SUBFOLDER'] = '/myfolderapp/';
+	// *This example can be accessed at http://localhost/myfolderapp/*
 
 More details on installation can be found at http://www.doophp.com/doc/guide/start/install
 
 
 ### REQUIREMENTS
 
-The minimum requirement by DooPHP is that your Web server supports
-PHP 5.1.x or above. DooPHP has been tested with Apache 2 and Cherokee Web Server
-on Windows and Linux operating systems.
+The minimum requirement by DooPHP is that your Web server supports **PHP 5.1.x** or above. DooPHP has been tested
+with Apache 2 and Cherokee Web Server on Windows and Linux operating systems.
 
 To use the database ORM you have to enable PDO extension.
 
@@ -45,7 +43,7 @@ To use the database ORM you have to enable PDO extension.
 ### QUICK START
 
 DooPHP comes with a directory call 'app'. It is the basic of a DooPHP application.
-Change the Site path and project path configurations in /protected/config/common.conf.php 
+Change the Site path and project path configurations in */protected/config/common.conf.php*
 
 The default configuration is for development purpose.
 
@@ -55,7 +53,7 @@ The default configuration is for development purpose.
 Please visit the project website for tutorials, class reference
 and join discussions with other DooPHP users.
 
-	DooPHP
+	**DooPHP**
 	http://www.doophp.com
 	http://www.doophp.com/blog
 	http://www.doophp.com/forum
