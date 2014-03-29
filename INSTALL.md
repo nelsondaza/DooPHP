@@ -10,24 +10,25 @@ directory. You have to put it under the root directory for the app & demos to wo
 
 You shall see the following files and directories:
 
-      demos/                demos
-      dooframework/         framework source files
-      app/                  base of a project
-      LICENSE.txt           license of DooPHP (LICENSE.md on this GitHub Version)
-      README.txt            this file (README.md on this GitHub Version)
-      CHANGELOG.txt         changes made in this version (CHANGELOG.md on this GitHub Version)
+	demos/                demos
+	dooframework/         framework source files
+	app/                  base of a project
+	LICENSE.txt           license of DooPHP (LICENSE.md on this GitHub Version)
+	README.txt            this file (README.md on this GitHub Version)
+	CHANGELOG.txt         changes made in this version (CHANGELOG.md on this GitHub Version)
 
 
 If you placed it elsewhere, please change the app or demos configurations in protected/config/common.conf.php
 	
-      $config['SITE_PATH'] = 'C:/wamp/www/myfolderapp/';
-      $config['BASE_PATH'] = 'C:/wamp/www/dooframework/';
+	$config['SITE_PATH'] = 'C:/wamp/www/myfolderapp/';
+	$config['BASE_PATH'] = 'C:/wamp/www/dooframework/';
 	  
 	  
 If your app is in a sub directory, please change the following setting:
       
 	$config['SUBFOLDER'] = '/myfolderapp/';
-	// *This example can be accessed at http://localhost/myfolderapp/*
+
+*This example can be accessed at http://localhost/myfolderapp/*
 
 More details on installation can be found at http://www.doophp.com/doc/guide/start/install
 
@@ -53,10 +54,10 @@ The default configuration is for development purpose.
 Please visit the project website for tutorials, class reference
 and join discussions with other DooPHP users.
 
-```
-	**DooPHP**
-	http://www.doophp.com
-	http://www.doophp.com/blog
-	http://www.doophp.com/forum
-	http://www.twitter.com/doophp
-```
+<dl>
+  <dt>DooPHP</dt>
+  <dd>http://www.doophp.com</dd>
+  <dd>http://www.doophp.com/blog</dd>
+  <dd>http://www.doophp.com/forum</dd>
+  <dd>http://www.twitter.com/doophp</dd>
+</dl>

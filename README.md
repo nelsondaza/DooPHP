@@ -24,11 +24,12 @@ HTTP Digest Authentication, a flexible template engine, logging & profiling tool
 
 ### HERE: Version: 1.5
 
-	`Joined whit Google Code on [Issue 95](http://code.google.com/p/doophp/issues/detail?id=95&can=1&sort=-id):`
-		DooSession needs a more robust way to check for status of session
 
-	`Joined whit GitHub on [commit b5f89db](https://github.com/darkredz/DooPHP/commit/b5f89db87ea41a7f14a54c7d974fdf098f290a12):`
-		"Looks like an E-mail RegExp adjustment" *b5f89db87ea41a7f14a54c7d974fdf098f290a12*
+**Merged with Google Code** on [Issue 95](http://code.google.com/p/doophp/issues/detail?id=95&can=1&sort=-id):
+	DooSession needs a more robust way to check for status of session
+
+**Merged with GitHub** on [commit b5f89db](https://github.com/darkredz/DooPHP/commit/b5f89db87ea41a7f14a54c7d974fdf098f290a12):
+	"Looks like an E-mail RegExp adjustment" *b5f89db87ea41a7f14a54c7d974fdf098f290a12*
 
 
 ## DooPHP's belief
