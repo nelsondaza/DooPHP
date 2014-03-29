@@ -12,25 +12,24 @@ web framework, such as MVC structured, RESTful API, REST client, URI routing, da
 HTTP Digest Authentication, a flexible template engine, logging & profiling tools, etc.
 
 
-*   [Website](http://doophp.com/)
-*   [Documentation](http://doophp.com/doc)
-*   [Benchmark](http://doophp.com/benchmark)
-*   [Twitter](http://twitter.com/doophp)
+* [Website](http://doophp.com/)
+* [Documentation](http://doophp.com/doc)
+* [Benchmark](http://doophp.com/benchmark)
+* [Twitter](http://twitter.com/doophp)
 
-*   [Google Code](http://code.google.com/p/doophp/)
-*   [GitHub](https://github.com/darkredz/DooPHP/)
+* [Google Code](http://code.google.com/p/doophp/)
+* [GitHub](https://github.com/darkredz/DooPHP/)
 
 ---
 
 ### HERE: Version: 1.5
 
->
->`Joined whit Google Code on [Issue 95](http://code.google.com/p/doophp/issues/detail?id=95&can=1&sort=-id):`
-> > DooSession needs a more robust way to check for status of session
->
-> `Joined whit GitHub on [commit b5f89db](https://github.com/darkredz/DooPHP/commit/b5f89db87ea41a7f14a54c7d974fdf098f290a12):`
-> > "Looks like an E-mail RegExp adjustment" *b5f89db87ea41a7f14a54c7d974fdf098f290a12*
->
+	`Joined whit Google Code on [Issue 95](http://code.google.com/p/doophp/issues/detail?id=95&can=1&sort=-id):`
+		DooSession needs a more robust way to check for status of session
+
+	`Joined whit GitHub on [commit b5f89db](https://github.com/darkredz/DooPHP/commit/b5f89db87ea41a7f14a54c7d974fdf098f290a12):`
+		"Looks like an E-mail RegExp adjustment" *b5f89db87ea41a7f14a54c7d974fdf098f290a12*
+
 
 ## DooPHP's belief
 

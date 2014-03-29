@@ -53,9 +53,10 @@ The default configuration is for development purpose.
 Please visit the project website for tutorials, class reference
 and join discussions with other DooPHP users.
 
+```
 	**DooPHP**
 	http://www.doophp.com
 	http://www.doophp.com/blog
 	http://www.doophp.com/forum
 	http://www.twitter.com/doophp
-
+```
